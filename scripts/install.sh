@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install the discord-router plugin to ~/.claude/plugins/local/discord-router
+# Install the discord-router server to ~/.claude/plugins/local/discord-router
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PLUGIN_DIR="${HOME}/.claude/plugins/local/discord-router"
 
-echo "Installing discord-router plugin..."
+echo "Installing discord-router..."
 
 mkdir -p "$PLUGIN_DIR/.claude-plugin"
 
@@ -21,4 +21,7 @@ cp -r "$REPO_DIR/skills" "$PLUGIN_DIR/"
 (cd "$PLUGIN_DIR" && bun install --no-summary 2>/dev/null)
 
 echo "Installed to ${PLUGIN_DIR}"
-echo "Restart Claude Code to load the updated plugin."
+echo ""
+echo "Next steps:"
+echo "  1. Add a project:  ./scripts/add-project.sh /path/to/project CHANNEL_ID [--dm]"
+echo "  2. Launch:          claude --dangerously-load-development-channels server:discord-<name>"

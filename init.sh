@@ -137,7 +137,8 @@ cp -r "$REPO_DIR/skills" "$PLUGIN_DIR/"
 # Install dependencies
 (cd "$PLUGIN_DIR" && bun install --no-summary 2>/dev/null)
 
-ok "Plugin installed to ${PLUGIN_DIR}"
+ok "Server installed to ${PLUGIN_DIR}"
+
 echo ""
 
 # ─── Disable marketplace Discord plugin if present ──────────────────────────
@@ -169,6 +170,8 @@ if [[ ! -f "$ROUTING_FILE" ]]; then
   echo '{}' > "$ROUTING_FILE"
 fi
 
+CLAUDE_JSON="${HOME}/.claude.json"
+
 read -rp "   Project directory (absolute path, e.g. /home/you/myproject): " PROJECT_PATH
 
 if [[ -z "$PROJECT_PATH" ]]; then
@@ -180,6 +183,9 @@ else
   if [[ ! -d "$PROJECT_PATH" ]]; then
     warn "Directory ${PROJECT_PATH} doesn't exist yet. Adding anyway."
   fi
+
+  # Derive server name from directory basename
+  SERVER_NAME="discord-$(basename "$PROJECT_PATH")"
 
   echo ""
   echo -e "   Now I need the Discord channel ID for this project."
@@ -198,7 +204,7 @@ else
       DM_FLAG=false
     fi
 
-    # Update routing.json using a temp file (no jq dependency)
+    # Update routing.json
     python3 -c "
 import json, sys
 path = sys.argv[1]
@@ -214,6 +220,30 @@ with open(path, 'w') as f:
 " "$ROUTING_FILE"
 
     ok "Added ${PROJECT_PATH} → channel ${CHANNEL_ID} (dm=${DM_FLAG})"
+
+    # Register MCP server in ~/.claude.json
+    python3 -c "
+import json, sys, os
+claude_json = sys.argv[1]
+server_name = sys.argv[2]
+plugin_dir = sys.argv[3]
+project_path = sys.argv[4]
+config = {}
+if os.path.exists(claude_json):
+    with open(claude_json) as f:
+        config = json.load(f)
+servers = config.setdefault('mcpServers', {})
+servers[server_name] = {
+    'command': 'bun',
+    'args': ['run', '--cwd', plugin_dir, '--shell=bun', '--silent', 'start'],
+    'env': {'CLAUDE_PROJECT_DIR': project_path}
+}
+with open(claude_json, 'w') as f:
+    json.dump(config, f, indent=2)
+    f.write('\n')
+" "$CLAUDE_JSON" "$SERVER_NAME" "$PLUGIN_DIR" "$PROJECT_PATH"
+
+    ok "Registered MCP server \"${SERVER_NAME}\" in ~/.claude.json"
   fi
 fi
 
@@ -271,7 +301,13 @@ echo -e "${GREEN}${BOLD}Setup complete!${NC}"
 echo ""
 echo -e "   ${BOLD}What to do next:${NC}"
 echo ""
-echo -e "   1. Restart Claude Code (or start a new session) to load the plugin"
+if [[ -n "${SERVER_NAME:-}" ]]; then
+echo -e "   1. Start Claude Code with the Discord channel:"
+echo -e "      ${CYAN}claude --dangerously-load-development-channels server:${SERVER_NAME}${NC}"
+else
+echo -e "   1. Add a project, then start Claude Code:"
+echo -e "      ${CYAN}./scripts/add-project.sh /path/to/project CHANNEL_ID${NC}"
+fi
 echo -e "   2. If you haven't paired yet, DM your bot and approve with"
 echo -e "      ${CYAN}/discord:access pair <code>${NC}"
 echo -e "   3. Send a message in your project's Discord channel"

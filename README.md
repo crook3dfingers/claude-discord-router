@@ -25,15 +25,50 @@ cd claude-discord-router
 ./init.sh
 ```
 
-The setup script walks you through:
-1. Creating a Discord bot
-2. Saving your bot token
-3. Installing the plugin
-4. Configuring your first project and channel
+The setup script walks you through creating a Discord bot, saving your token, installing the server, and configuring your first project.
+
+Then launch Claude Code with the Discord channel:
+
+```bash
+claude --dangerously-load-development-channels server:discord-myproject
+```
+
+The server name is `discord-` followed by the project directory basename. For example, a project at `~/github/tarmo` gets the server name `discord-tarmo`.
+
+## Usage
+
+Each project gets a dedicated MCP server entry in `~/.claude.json`. Launch Claude Code with the matching server name:
+
+```bash
+claude --dangerously-load-development-channels server:discord-myproject
+```
+
+| Flag | Purpose |
+|------|---------|
+| `--dangerously-load-development-channels server:discord-<name>` | **Required.** Launches the Discord MCP server as a channel for this project |
+| `--dangerously-skip-permissions` | Skip tool permission prompts (optional, for unattended use) |
+| `--remote-control "Label"` | Enable remote control with a display label (optional) |
+
+**Example — headless session:**
+
+```bash
+cd ~/github/my-project
+claude --dangerously-load-development-channels server:discord-my-project --dangerously-skip-permissions --remote-control "My Project"
+```
 
 ## How It Works
 
-A routing config at `~/.claude/channels/discord/routing.json` maps project directories to channel IDs:
+Each project gets three config entries:
+
+1. **MCP server in `~/.claude.json`** — launches the Discord bot with `CLAUDE_PROJECT_DIR` set to the project path
+2. **Routing entry in `routing.json`** — maps the project path to a Discord channel ID
+3. **Access entry in `access.json`** — allows the bot to read/write in that channel
+
+When Claude Code starts, the MCP server connects to Discord, reads `CLAUDE_PROJECT_DIR`, looks it up in `routing.json`, and delivers only messages from matching channels. Non-matching messages are dropped.
+
+### routing.json
+
+Lives at `~/.claude/channels/discord/routing.json`:
 
 ```json
 {
@@ -47,14 +82,12 @@ A routing config at `~/.claude/channels/discord/routing.json` maps project direc
 }
 ```
 
-When Claude Code starts in a project directory, the plugin reads `CLAUDE_PROJECT_DIR`, looks it up in `routing.json`, and delivers only messages from matching channels. Non-matching messages are dropped.
-
 - **`channels`** — Array of Discord channel IDs this project listens to
 - **`dm`** — Set to `true` on exactly one project to receive DMs. If omitted or `false`, DMs are not delivered to that session
 
 ### Graceful Fallback
 
-If `routing.json` doesn't exist, or a project has no entry, the plugin delivers all messages — matching standard Discord plugin behavior.
+If `routing.json` doesn't exist, or a project has no entry, the server delivers all messages — matching standard Discord plugin behavior.
 
 ## Adding More Projects
 
@@ -68,7 +101,7 @@ Add `--dm` if this project should receive DMs:
 ./scripts/add-project.sh /home/you/github/main-project 1234567890123456789 --dm
 ```
 
-Or edit `~/.claude/channels/discord/routing.json` directly. Changes take effect on the next inbound message — no restart needed.
+This creates the routing entry, access entry, and MCP server entry in one command. It prints the `--dangerously-load-development-channels server:discord-<name>` flag to use when launching.
 
 ## Manual Setup
 
@@ -95,27 +128,27 @@ echo "DISCORD_BOT_TOKEN=your_token_here" > ~/.claude/channels/discord/.env
 chmod 600 ~/.claude/channels/discord/.env
 ```
 
-### 3. Install the Plugin
+### 3. Install the Server
 
 ```bash
 ./scripts/install.sh
 ```
 
-If you were previously using the marketplace Discord plugin, disable it to avoid duplicate connections:
+### 4. Add a Project
 
 ```bash
-mv ~/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/discord/.mcp.json \
-   ~/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/discord/.mcp.json.disabled
+./scripts/add-project.sh /home/you/github/my-project 1234567890123456789 --dm
 ```
 
-### 4. Create Routing Config
+This creates routing, access, and MCP server entries. If you prefer to do it manually, see [Manual MCP Server Registration](#manual-mcp-server-registration).
+
+### 5. Launch Claude Code
 
 ```bash
-cp templates/routing.json.example ~/.claude/channels/discord/routing.json
-# Edit with your project paths and channel IDs
+claude --dangerously-load-development-channels server:discord-my-project
 ```
 
-### 5. Set Up Access Control
+### 6. Set Up Access Control
 
 The bot uses an allowlist to control who can talk to it. On first run:
 
@@ -124,11 +157,29 @@ The bot uses an allowlist to control who can talk to it. On first run:
 3. Run `/discord:access pair <code>` in Claude Code to approve yourself
 4. Run `/discord:access policy allowlist` to lock it down
 
-### 6. Get Channel IDs
+### 7. Get Channel IDs
 
 In Discord: **Settings → Advanced → Developer Mode** (on). Then right-click any channel → **Copy Channel ID**.
 
 ## Configuration Reference
+
+### ~/.claude.json (MCP servers)
+
+Each project gets a named MCP server entry. The server name is `discord-` followed by the project directory basename:
+
+```json
+{
+  "mcpServers": {
+    "discord-my-project": {
+      "command": "bun",
+      "args": ["run", "--cwd", "/home/you/.claude/plugins/local/discord-router", "--shell=bun", "--silent", "start"],
+      "env": {
+        "CLAUDE_PROJECT_DIR": "/home/you/github/my-project"
+      }
+    }
+  }
+}
+```
 
 ### routing.json
 
@@ -143,11 +194,31 @@ Lives at `~/.claude/channels/discord/routing.json`. Maps absolute project direct
 
 Lives at `~/.claude/channels/discord/access.json`. Controls who can talk to the bot. Managed via `/discord:access` and `/discord:configure` in Claude Code. See `skills/access/SKILL.md` for details.
 
+## Manual MCP Server Registration
+
+The `add-project.sh` script handles this automatically. If you need to register manually, add a named server entry to `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "discord-my-project": {
+      "command": "bun",
+      "args": ["run", "--cwd", "/home/you/.claude/plugins/local/discord-router", "--shell=bun", "--silent", "start"],
+      "env": {
+        "CLAUDE_PROJECT_DIR": "/home/you/github/my-project"
+      }
+    }
+  }
+}
+```
+
+The `CLAUDE_PROJECT_DIR` env var must match the project path in `routing.json` exactly. Without this entry, `--dangerously-load-development-channels server:discord-my-project` will fail with "no MCP server configured with that name".
+
 ## Security
 
 - **Bot token stays local.** Stored in `~/.claude/channels/discord/.env` with `chmod 600`. Never committed, never shared.
 - **Each user needs their own bot.** The plugin runs a local Discord gateway connection using the bot token. Sharing a token across users would give everyone access to all messages.
-- **No changes to project repos.** All config lives in `~/.claude/`. No files are added to any project directory.
+- **No changes to project repos.** All config lives in `~/.claude/` and `~/.claude.json`. No files are added to any project directory.
 - **Channel IDs are not sensitive.** They are public snowflakes visible to anyone in the server.
 - **Public Bot toggle** — In the Developer Portal under Installation, you can control whether others can invite your bot. For a personal bot, leave it off.
 
@@ -157,7 +228,7 @@ Lives at `~/.claude/channels/discord/access.json`. Controls who can talk to the 
 ./scripts/uninstall.sh
 ```
 
-This removes the plugin but preserves your bot token and routing config. To delete those as well:
+This removes the server and all `discord-*` MCP entries from `~/.claude.json`, but preserves your bot token and routing config. To delete those as well:
 
 ```bash
 rm ~/.claude/channels/discord/.env
@@ -173,7 +244,7 @@ rm ~/.claude/channels/discord/routing.json
 
 **Getting messages in every session**
 - Verify `routing.json` exists at `~/.claude/channels/discord/routing.json`
-- Check that the project directory path matches exactly (use `pwd` to confirm)
+- Check that `CLAUDE_PROJECT_DIR` is set correctly in the MCP server entry in `~/.claude.json`
 - Look for the `discord channel: routing →` log line in stderr when Claude Code starts
 
 **DMs showing up everywhere**
@@ -183,8 +254,11 @@ rm ~/.claude/channels/discord/routing.json
 - The channel needs to be in both `routing.json` AND `access.json` groups
 - Run `./scripts/add-project.sh` to update both files
 
+**"no MCP server configured with that name" error**
+- The server is not registered in `~/.claude.json`. Run `./scripts/add-project.sh` or add the entry manually — see [Manual MCP Server Registration](#manual-mcp-server-registration)
+
 **Marketplace plugin conflict**
-- If you have the marketplace Discord plugin installed, disable it:
+- If you have the marketplace Discord plugin installed, disable it to avoid duplicate bot connections:
   ```bash
   mv ~/.claude/plugins/marketplaces/.../discord/.mcp.json \
      ~/.claude/plugins/marketplaces/.../discord/.mcp.json.disabled

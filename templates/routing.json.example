@@ -1,0 +1,9 @@
+{
+  "/home/you/github/project-a": {
+    "channels": ["1234567890123456789"],
+    "dm": true
+  },
+  "/home/you/github/project-b": {
+    "channels": ["9876543210987654321"]
+  }
+}

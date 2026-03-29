@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Remove the discord-router plugin and its MCP server entries.
+# Remove the discord-router server and its MCP server entries.
 # Does NOT delete your bot token or routing config.
 
 PLUGIN_DIR="${HOME}/.claude/plugins/local/discord-router"
@@ -14,7 +14,7 @@ if [[ -d "$PLUGIN_DIR" ]]; then
   rm -rf "$PLUGIN_DIR"
   echo "Removed ${PLUGIN_DIR}"
 else
-  echo "Plugin not found at ${PLUGIN_DIR} — nothing to remove."
+  echo "Server not found at ${PLUGIN_DIR} — nothing to remove."
 fi
 
 # Remove all discord-* MCP server entries from ~/.claude.json

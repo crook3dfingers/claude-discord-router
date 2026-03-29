@@ -20,7 +20,7 @@ Discord                          Your Machine
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USER/claude-discord-router.git
+git clone https://github.com/crook3dfingers/claude-discord-router.git
 cd claude-discord-router
 ./init.sh
 ```
@@ -117,7 +117,7 @@ If you prefer to set things up without `init.sh`:
 6. Set Install Link to **Discord Provided Link**
 7. Under Default Install Settings → Guild Install:
    - Scopes: `bot`
-   - Permissions: Send Messages, Read Message History, Add Reactions, Attach Files
+   - Permissions: Send Messages, Read Message History, Add Reactions, Attach Files, Use Slash Commands
 8. Save, copy the **Install Link**, open it in your browser, add the bot to your server
 
 ### 2. Save the Token
@@ -257,8 +257,8 @@ rm ~/.claude/channels/discord/routing.json
 **"no MCP server configured with that name" error**
 - The server is not registered in `~/.claude.json`. Run `./scripts/add-project.sh` or add the entry manually — see [Manual MCP Server Registration](#manual-mcp-server-registration)
 
-**Marketplace server conflict**
-- If you have the marketplace Discord server installed, disable it to avoid duplicate bot connections:
+**Marketplace plugin conflict**
+- If you have the marketplace Discord plugin installed, disable it to avoid duplicate bot connections:
   ```bash
   mv ~/.claude/plugins/marketplaces/.../discord/.mcp.json \
      ~/.claude/plugins/marketplaces/.../discord/.mcp.json.disabled

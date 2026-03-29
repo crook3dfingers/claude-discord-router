@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # claude-discord-router — Interactive setup script
-# Creates a Discord bot, installs the routing-aware plugin, and configures
+# Creates a Discord bot, installs the routing-aware server, and configures
 # per-project channel routing for Claude Code.
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -117,9 +117,9 @@ fi
 
 echo ""
 
-# ─── Install Plugin ─────────────────────────────────────────────────────────
+# ─── Install Server ─────────────────────────────────────────────────────────
 
-info "Installing discord-router plugin..."
+info "Installing discord-router server..."
 
 mkdir -p "$PLUGIN_DIR"
 
@@ -146,7 +146,7 @@ echo ""
 MARKETPLACE_PLUGIN="${HOME}/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/discord"
 if [[ -d "$MARKETPLACE_PLUGIN" ]]; then
   warn "Marketplace Discord plugin detected at ${MARKETPLACE_PLUGIN}"
-  echo -e "   The routing plugin replaces it. You should disable the marketplace"
+  echo -e "   discord-router replaces it. You should disable the marketplace"
   echo -e "   version to avoid duplicate bot connections."
   echo ""
   read -rp "   Disable marketplace Discord plugin? [Y/n] " disable_marketplace

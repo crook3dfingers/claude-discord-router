@@ -4,7 +4,7 @@ Per-project Discord channels for Claude Code. One bot, many projects — each Cl
 
 ## What This Does
 
-When you run Claude Code in multiple project directories, each session connects to Discord through the same bot. Without routing, every session sees every message. This plugin adds **per-session channel filtering**: messages in `#project-a` only go to the Claude Code session running in `/home/you/project-a`.
+When you run Claude Code in multiple project directories, each session connects to Discord through the same bot. Without routing, every session sees every message. This server adds **per-session channel filtering**: messages in `#project-a` only go to the Claude Code session running in `/home/you/project-a`.
 
 ```
 Discord                          Your Machine
@@ -87,7 +87,7 @@ Lives at `~/.claude/channels/discord/routing.json`:
 
 ### Graceful Fallback
 
-If `routing.json` doesn't exist, or a project has no entry, the server delivers all messages — matching standard Discord plugin behavior.
+If `routing.json` doesn't exist, or a project has no entry, the server delivers all messages — matching standard Discord server behavior.
 
 ## Adding More Projects
 
@@ -217,7 +217,7 @@ The `CLAUDE_PROJECT_DIR` env var must match the project path in `routing.json` e
 ## Security
 
 - **Bot token stays local.** Stored in `~/.claude/channels/discord/.env` with `chmod 600`. Never committed, never shared.
-- **Each user needs their own bot.** The plugin runs a local Discord gateway connection using the bot token. Sharing a token across users would give everyone access to all messages.
+- **Each user needs their own bot.** The server runs a local Discord gateway connection using the bot token. Sharing a token across users would give everyone access to all messages.
 - **No changes to project repos.** All config lives in `~/.claude/` and `~/.claude.json`. No files are added to any project directory.
 - **Channel IDs are not sensitive.** They are public snowflakes visible to anyone in the server.
 - **Public Bot toggle** — In the Developer Portal under Installation, you can control whether others can invite your bot. For a personal bot, leave it off.
@@ -257,8 +257,8 @@ rm ~/.claude/channels/discord/routing.json
 **"no MCP server configured with that name" error**
 - The server is not registered in `~/.claude.json`. Run `./scripts/add-project.sh` or add the entry manually — see [Manual MCP Server Registration](#manual-mcp-server-registration)
 
-**Marketplace plugin conflict**
-- If you have the marketplace Discord plugin installed, disable it to avoid duplicate bot connections:
+**Marketplace server conflict**
+- If you have the marketplace Discord server installed, disable it to avoid duplicate bot connections:
   ```bash
   mv ~/.claude/plugins/marketplaces/.../discord/.mcp.json \
      ~/.claude/plugins/marketplaces/.../discord/.mcp.json.disabled

@@ -97,14 +97,16 @@ bunx biome check server/server.ts
 | `doc-editor/SKILL.md` | Haiku, **foreground** | Review draft markdown for accuracy and prose quality before writing |
 | `release/SKILL.md` | default, **foreground** | Tag and push a new release |
 
-### Doc-Editor Workflow (MANDATORY for all prose)
+### Doc-editor workflow (mandatory sequence)
 
-When writing or editing README.md, CLAUDE.md, or any user-facing documentation:
+When editing any `.md` file, follow this exact sequence **without stopping between steps**:
 
-1. Draft the text.
-2. Call `/doc-editor` with the draft as the argument.
-3. Use the cleaned prose returned by the skill in your Edit or Write.
-4. Do **not** skip step 2. Do **not** stop after step 2 — continue with the write.
+1. Read the file
+2. Invoke doc-editor skill with the draft prose
+3. **Immediately** use the cleaned prose from step 2 in an Edit or Write call — do NOT end your turn after step 2
+4. Confirm the edit to the user
+
+Steps 2 and 3 must happen in the **same response turn**. If you find yourself about to respond to the user after step 2 without having done step 3, you have a bug — continue to step 3.
 
 ## Architecture Notes
 
